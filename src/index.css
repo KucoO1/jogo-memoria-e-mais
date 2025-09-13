@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* globals.css */
+.perspective {
+  perspective: 900px;
+}
+.backface-hidden {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}

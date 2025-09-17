@@ -16,6 +16,7 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
   const [resetKey, setResetKey] = useState<number>(0);
   const [level, setLevel] = useState<number>(1);
   const [score, setScore] = useState<number>(0);
+  const [showCorrectPath, setShowCorrectPath] = useState<boolean>(false);
 
   // Configurações de dificuldade
   const difficultyConfig = {
@@ -66,6 +67,7 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
     setPlayerPath([]);
     setMessage("");
     setVisibleIndices([]);
+    setShowCorrectPath(false);
   }
 
   function nextLevel() {
@@ -83,8 +85,15 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
 
     const step = newPlayerPath.length - 1;
     if (path[step] !== index) {
-      setMessage("❌ Você errou! Tente novamente.");
+      setMessage("❌ Você errou! O caminho correto será mostrado.");
       setScore(Math.max(0, score - 5));
+      
+      // Mostra o caminho correto por 3 segundos
+      setShowCorrectPath(true);
+      setTimeout(() => {
+        setShowCorrectPath(false);
+      }, 3000);
+      
       return;
     }
 
@@ -105,6 +114,7 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
     setMessage("");
     setVisibleIndices([]);
     setDisplaying(true);
+    setShowCorrectPath(false);
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     const stepDelay = 600;
@@ -161,7 +171,10 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
         </div>
 
         <p className="text-gray-300 text-center text-sm mb-6">
-          Observe a sequência de quadrados. Quando desaparecer, reproduza o caminho na mesma ordem.
+          {showCorrectPath 
+            ? "🔍 Este é o caminho correto que você deveria ter seguido!" 
+            : "Observe a sequência de quadrados. Quando desaparecer, reproduza o caminho na mesma ordem."
+          }
         </p>
 
         {/* Tabuleiro responsivo */}
@@ -177,6 +190,10 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
               const isClicked = playerPath.includes(i);
               const isInPath = path.includes(i);
               const isDisabled = displaying || !!message || playerPath.includes(i);
+              
+              // Determina se este quadrado faz parte do caminho correto sendo mostrado
+              const isCorrectPathStep = showCorrectPath && path.includes(i);
+              const pathIndex = showCorrectPath ? path.indexOf(i) : -1;
 
               return (
                 <button
@@ -184,18 +201,27 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
                   onClick={() => handleClick(i)}
                   disabled={isDisabled}
                   className={`
-                    aspect-square rounded-lg transition-all duration-300 border-2
-                    ${isVisible 
-                      ? "bg-yellow-400 border-yellow-500 scale-105" 
-                      : isClicked 
-                        ? isInPath
-                          ? "bg-green-500 border-green-600" 
-                          : "bg-red-500 border-red-600"
-                        : "bg-slate-700 border-slate-600 hover:bg-slate-600"
+                    aspect-square rounded-lg transition-all duration-300 border-2 relative
+                    ${showCorrectPath && isCorrectPathStep 
+                      ? "bg-blue-500 border-blue-600 animate-pulse" 
+                      : isVisible 
+                        ? "bg-yellow-400 border-yellow-500 scale-105" 
+                        : isClicked 
+                          ? isInPath
+                            ? "bg-green-500 border-green-600" 
+                            : "bg-red-500 border-red-600"
+                          : "bg-slate-700 border-slate-600 hover:bg-slate-600"
                     }
                     ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}
                   `}
-                />
+                >
+                  {/* Mostra o número da ordem no caminho correto */}
+                  {showCorrectPath && isCorrectPathStep && (
+                    <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">
+                      {pathIndex + 1}
+                    </span>
+                  )}
+                </button>
               );
             })}
           </div>
@@ -209,6 +235,9 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
               : "bg-green-900/50 text-green-200"
           }`}>
             {message}
+            {message.includes("❌") && !showCorrectPath && (
+              <div className="text-xs mt-1">Clique em "Reiniciar" para tentar novamente</div>
+            )}
           </div>
         )}
 
@@ -218,8 +247,12 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
             <div className="text-yellow-300 flex items-center justify-center">
               <span className="animate-pulse mr-2">●</span> Observando...
             </div>
+          ) : showCorrectPath ? (
+            <div className="text-blue-300 flex items-center justify-center">
+              <span className="animate-pulse mr-2">●</span> Mostrando caminho correto...
+            </div>
           ) : message ? (
-            <div className="text-slate-400">Clique em "Jogar Novamente" para continuar</div>
+            <div className="text-slate-400">Clique em "Reiniciar" para tentar novamente</div>
           ) : (
             <div className="text-green-400 flex items-center justify-center">
               <span className="mr-2">●</span> Sua vez!

@@ -8,11 +8,9 @@ interface CardProps {
   flipped: boolean;
   onClick: () => void;
   disabled?: boolean;
-   isMobile?: boolean;
 }
 
 export default function Card({ value, flipped, onClick, disabled }: CardProps) {
-  // animações Framer
   const containerVariants = {
     idle: { scale: 1, rotateY: 0 },
     flipped: { scale: 1, rotateY: 180 },
@@ -20,7 +18,7 @@ export default function Card({ value, flipped, onClick, disabled }: CardProps) {
   };
 
   const faceStyleBase =
-    "absolute inset-0 flex items-center justify-center rounded-xl text-2xl sm:text-3xl font-bold backface-hidden shadow-md";
+    "absolute inset-0 flex items-center justify-center rounded-lg sm:rounded-xl text-xl sm:text-3xl font-bold backface-hidden shadow-md";
 
   return (
     <motion.div
@@ -31,11 +29,11 @@ export default function Card({ value, flipped, onClick, disabled }: CardProps) {
       animate={flipped ? "flipped" : "idle"}
       whileTap={{ scale: 0.97 }}
       variants={containerVariants}
-      transition={{ duration: 0.45, ease: "backOut" }}
-      className="relative w-16 h-16 sm:w-20 sm:h-20 perspective"
+      transition={{ duration: 0.4, ease: "backOut" }}
+      className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 perspective"
       style={{ cursor: disabled ? "default" : "pointer", transformStyle: "preserve-3d" }}
     >
-      {/* Frente (quando vira exibe emoji) */}
+      {/* Frente (emoji) */}
       <motion.div
         className={faceStyleBase + " bg-white text-black"}
         style={{ transform: "rotateY(180deg)" }}
@@ -43,14 +41,13 @@ export default function Card({ value, flipped, onClick, disabled }: CardProps) {
         {value}
       </motion.div>
 
-      {/* Verso (quando não virada mostra ponto de interrogação) */}
+      {/* Verso (interrogação) */}
       <motion.div
         className={faceStyleBase + " bg-gray-700 text-white"}
         style={{ transform: "rotateY(0deg)" }}
       >
         ❓
       </motion.div>
-
     </motion.div>
   );
 }

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import MainMenu from "./components/MainMenu";
 import MemoryGame from "./components/memory/MemoryGame";
-// futuramente: import OutroJogo from "./components/outro/OutroJogo";
+import PathMemoryGame from "./components/memory2/PathMemoryGame";
 
 export default function App() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
@@ -13,6 +13,8 @@ export default function App() {
         <MainMenu onSelectGame={setSelectedGame} />
       ) : selectedGame === "memory" ? (
         <MemoryGame onBack={() => setSelectedGame(null)} />
+      ) : selectedGame === "path" ? (
+        <PathMemoryGame onBack={() => setSelectedGame(null)} />
       ) : (
         <div>
           <p>🚧 Jogo em desenvolvimento...</p>

@@ -120,8 +120,6 @@ useEffect(() => {
   }, 600); // tempo suficiente para ver as cartas viradas
 }, [flippedCards]);
 
-
-  // vitória
  // vitória
 useEffect(() => {
   if (cards.length === 0) return;
@@ -136,10 +134,10 @@ useEffect(() => {
 
     setTimeout(() => {
       const name = prompt("🎉 Parabéns! Digite seu nome:") || "Jogador";
-      const newEntry = [{ name, score, time, moves }]; // <-- somente o jogador real
+      const newEntry = [{ name, score, time, moves }]; 
       setLeaderboard(newEntry);
       localStorage.setItem("memory_leaderboard", JSON.stringify(newEntry));
-      setScoreSaved(true); // evita repetição
+      setScoreSaved(true); 
     }, 600);
   }
 }, [cards, scoreSaved, score, time, moves]);

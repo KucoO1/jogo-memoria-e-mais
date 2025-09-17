@@ -273,26 +273,50 @@ useEffect(() => {
         </div>
 
         {/* Painel direito - Ranking (oculto em mobile) */}
-        <div className="hidden lg:block w-full lg:w-80 xl:w-96">
-          <motion.div
-            className="bg-slate-800/70 p-4 sm:p-6 rounded-2xl backdrop-blur-lg border border-slate-700/40 shadow-[0_0_25px_rgba(16,185,129,0.2)]"
-          >
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-slate-600/40 pb-2 text-blue-300">
-              🏆 Ranking
-            </h2>
+        {/* Painel direito - Ranking (desktop) */}
+<div className="hidden lg:block w-full lg:w-80 xl:w-96">
+  <motion.div
+    className="bg-slate-800/70 p-4 sm:p-6 rounded-2xl backdrop-blur-lg border border-slate-700/40 shadow-[0_0_25px_rgba(16,185,129,0.2)]"
+  >
+    <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-slate-600/40 pb-2 text-blue-300">
+      🏆 Ranking
+    </h2>
 
-            <Leaderboard scores={leaderboard} />
+    <Leaderboard scores={leaderboard} />
 
-            <div className="mt-4 text-xs sm:text-sm text-slate-300">
-              <p className="mb-2 font-semibold text-white">📋 Regras:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>+20 pontos por acerto</li>
-                <li>-4 pontos por erro</li>
-                <li>Menor tempo → Ranking mais alto</li>
-              </ul>
-            </div>
-          </motion.div>
-        </div>
+    <div className="mt-4 text-xs sm:text-sm text-slate-300">
+      <p className="mb-2 font-semibold text-white">📋 Regras:</p>
+      <ul className="list-disc list-inside space-y-1">
+        <li>+10 pontos por acerto</li>
+        <li>-2 pontos por erro</li>
+        <li>Menor tempo → Ranking mais alto</li>
+      </ul>
+    </div>
+  </motion.div>
+</div>
+
+{/* Ranking no mobile (abaixo do jogo) */}
+<div className="block lg:hidden mt-6">
+  <motion.div
+    className="bg-slate-800/70 p-4 sm:p-6 rounded-2xl backdrop-blur-lg border border-slate-700/40 shadow-[0_0_25px_rgba(16,185,129,0.2)]"
+  >
+    <h2 className="text-lg sm:text-xl font-bold mb-3 border-b border-slate-600/40 pb-2 text-blue-300">
+      🏆 Ranking
+    </h2>
+
+    <Leaderboard scores={leaderboard} />
+
+    <div className="mt-3 text-xs sm:text-sm text-slate-300">
+      <p className="mb-1 font-semibold text-white">📋 Regras:</p>
+      <ul className="list-disc list-inside space-y-1">
+        <li>+10 pontos por acerto</li>
+        <li>-2 pontos por erro</li>
+        <li>Menor tempo → Ranking mais alto</li>
+      </ul>
+    </div>
+  </motion.div>
+</div>
+
       </div>
       
       {celebrate && <Confetti recycle={false} numberOfPieces={2000} onConfettiComplete={() => setCelebrate(false)} />}

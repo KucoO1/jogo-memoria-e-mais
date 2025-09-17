@@ -2,7 +2,7 @@
 import { useState } from "react";
 import PathBoard from "./PathBoard";
 
-type Difficulty = "easy" | "medium" | "hard" | "insane";
+type Difficulty = "easy" | "medium" | "hard" | "insane" | "ultra_insane";
 
 export default function PathMemoryGame({ onBack }: { onBack: () => void }) {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
@@ -82,6 +82,19 @@ export default function PathMemoryGame({ onBack }: { onBack: () => void }) {
                   <span className="text-sm opacity-70">12 passos</span>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-pink-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </button>
+
+              <button
+                onClick={() => setDifficulty("ultra_insane")}
+                className="group relative overflow-hidden px-6 py-5 bg-gradient-to-r from-red-600 via-red-700 to-red-800 rounded-2xl text-lg font-bold text-white shadow-2xl hover:shadow-red-500/30 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                <div className="relative flex items-center justify-between">
+                  <span className="text-2xl transition-transform duration-300 group-hover:scale-110">💀</span>
+                  <span>Ultra Insane (7x7)</span>
+                  <span className="text-sm opacity-70">16 passos</span>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-400 to-pink-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
               </button>
             </div>
 

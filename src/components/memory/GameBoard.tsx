@@ -27,20 +27,30 @@ interface CardType {
   matched: boolean;
 }
 
+interface HighScore {
+  name: string;
+  score: number;
+  time: number;
+  moves: number;
+  difficulty: string;
+  theme: string;
+  date: string;
+}
+
 export default function GameBoard({ config, onRestart }: GameBoardProps) {
   const [cards, setCards] = useState<CardType[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
   const [score, setScore] = useState(0);
   const [moves, setMoves] = useState(0);
   const [time, setTime] = useState(0);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<HighScore[]>([]);
   const [isLocked, setIsLocked] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
   const [scoreSaved, setScoreSaved] = useState(false);
+  const [playerName, setPlayerName] = useState<string>("");
 
-
-const timerRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   const totalCards = useMemo(() => {
     switch (config.difficulty) {
@@ -52,6 +62,36 @@ const timerRef = useRef<number | null>(null);
       default: return 8;
     }
   }, [config.difficulty]);
+
+  // Carrega nome do jogador e leaderboard
+  useEffect(() => {
+    const savedName = localStorage.getItem("memoryPlayerName");
+    const savedLeaderboard = localStorage.getItem("memoryLeaderboard");
+    
+    if (savedName) setPlayerName(savedName);
+    if (savedLeaderboard) setLeaderboard(JSON.parse(savedLeaderboard));
+  }, []);
+
+  // Salva melhor pontuação
+  const saveHighScore = (newScore: HighScore) => {
+    const currentBest = leaderboard.find(entry => 
+      entry.difficulty === config.difficulty && entry.theme === config.theme
+    );
+
+    if (!currentBest || newScore.score > currentBest.score || 
+        (newScore.score === currentBest.score && newScore.time < currentBest.time)) {
+      
+      const updatedLeaderboard = [
+        ...leaderboard.filter(entry => 
+          !(entry.difficulty === config.difficulty && entry.theme === config.theme)
+        ),
+        newScore
+      ];
+      
+      setLeaderboard(updatedLeaderboard);
+      localStorage.setItem("memoryLeaderboard", JSON.stringify(updatedLeaderboard));
+    }
+  };
 
   // INIT: cria e embaralha deck
   useEffect(() => {
@@ -69,9 +109,7 @@ const timerRef = useRef<number | null>(null);
     setIsLocked(false);
     setCelebrate(false);
     setGameComplete(false);
-
-    const saved = localStorage.getItem("memory_leaderboard");
-    if (saved) setLeaderboard(JSON.parse(saved));
+    setScoreSaved(false);
 
     // reset timer interval
     if (timerRef.current) {
@@ -89,60 +127,76 @@ const timerRef = useRef<number | null>(null);
   }, [config.theme, config.difficulty, totalCards]);
 
   // compara viradas
-useEffect(() => {
-  if (flippedCards.length < 2) return;
+  useEffect(() => {
+    if (flippedCards.length < 2) return;
 
-  setIsLocked(true);
-  setMoves((m) => m + 1);
+    setIsLocked(true);
+    setMoves((m) => m + 1);
 
-  const [a, b] = flippedCards;
-  setTimeout(() => {
-    setCards((prevCards) => {
-      const newCards = [...prevCards];
+    const [a, b] = flippedCards;
+    setTimeout(() => {
+      setCards((prevCards) => {
+        const newCards = [...prevCards];
 
-      if (newCards[a].value === newCards[b].value) {
-        // acerto - +10 pontos
-        newCards[a].matched = true;
-        newCards[b].matched = true;
-        setScore((s) => s + 10);
-      } else {
-        // erro - -2 pontos
-        newCards[a].flipped = false;
-        newCards[b].flipped = false;
-        setScore((s) => Math.max(0, s - 2));
+        if (newCards[a].value === newCards[b].value) {
+          // acerto - +10 pontos
+          newCards[a].matched = true;
+          newCards[b].matched = true;
+          setScore((s) => s + 10);
+        } else {
+          // erro - -2 pontos
+          newCards[a].flipped = false;
+          newCards[b].flipped = false;
+          setScore((s) => Math.max(0, s - 2));
+        }
+
+        return newCards;
+      });
+
+      setFlippedCards([]);
+      setIsLocked(false);
+    }, 600);
+  }, [flippedCards]);
+
+  // vitória
+  useEffect(() => {
+    if (cards.length === 0 || scoreSaved) return;
+    
+    if (cards.every((c) => c.matched)) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
 
-      return newCards;
-    });
+      setGameComplete(true);
+      setCelebrate(true);
 
-    setFlippedCards([]);
-    setIsLocked(false);
-  }, 600); // tempo suficiente para ver as cartas viradas
-}, [flippedCards]);
+      // Salva a pontuação
+      setTimeout(() => {
+        let name = playerName;
+        
+        // Se não tem nome salvo, pede o nome
+        if (!name) {
+          name = prompt("🎉 Parabéns! Digite seu nome:") || "Jogador";
+          setPlayerName(name);
+          localStorage.setItem("memoryPlayerName", name);
+        }
 
- // vitória
-useEffect(() => {
-  if (cards.length === 0) return;
-  if (cards.every((c) => c.matched) && !scoreSaved) {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+        const newScore: HighScore = {
+          name,
+          score,
+          time,
+          moves,
+          difficulty: config.difficulty,
+          theme: config.theme,
+          date: new Date().toLocaleDateString('pt-BR')
+        };
+
+        saveHighScore(newScore);
+        setScoreSaved(true);
+      }, 600);
     }
-
-    setGameComplete(true);
-    setCelebrate(true);
-
-    setTimeout(() => {
-      const name = prompt("🎉 Parabéns! Digite seu nome:") || "Jogador";
-      const newEntry = [{ name, score, time, moves }]; 
-      setLeaderboard(newEntry);
-      localStorage.setItem("memory_leaderboard", JSON.stringify(newEntry));
-      setScoreSaved(true); 
-    }, 600);
-  }
-}, [cards, scoreSaved, score, time, moves]);
-
-
+  }, [cards, scoreSaved, score, time, moves, playerName, config.difficulty, config.theme]);
 
   const handleFlip = (index: number) => {
     if (isLocked || gameComplete) return;
@@ -168,6 +222,9 @@ useEffect(() => {
   };
 
   const gridResponsiveClass = getGridResponsiveClass();
+
+  // Filtra leaderboard para mostrar apenas a melhor pontuação de cada dificuldade/tema
+  const bestScores = leaderboard.sort((a, b) => b.score - a.score || a.time - b.time);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white p-4 sm:p-6 relative overflow-hidden">
@@ -197,6 +254,11 @@ useEffect(() => {
                 <span className="px-2 py-1 text-xs rounded-full bg-purple-900/40 border border-purple-600/40">
                   {config.difficulty}
                 </span>
+                {playerName && (
+                  <span className="px-2 py-1 text-xs rounded-full bg-green-900/40 border border-green-600/40">
+                    👤 {playerName}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -265,56 +327,66 @@ useEffect(() => {
                 <p className="text-sm sm:text-base text-slate-200">
                   {time}s • {score}pts • {moves} jogadas
                 </p>
+                {scoreSaved && (
+                  <p className="text-xs text-emerald-200 mt-2">
+                    Pontuação salva para {config.difficulty} - {config.theme}
+                  </p>
+                )}
               </motion.div>
             )}
           </motion.div>
         </div>
 
-        {/* Painel direito - Ranking (oculto em mobile) */}
-        {/* Painel direito - Ranking (desktop) */}
-<div className="hidden lg:block w-full lg:w-80 xl:w-96">
-  <motion.div
-    className="bg-slate-800/70 p-4 sm:p-6 rounded-2xl backdrop-blur-lg border border-slate-700/40 shadow-[0_0_25px_rgba(16,185,129,0.2)]"
-  >
-    <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-slate-600/40 pb-2 text-blue-300">
-      🏆 Ranking
-    </h2>
+        {/* Painel direito - Ranking */}
+        <div className="w-full lg:w-80 xl:w-96">
+          <motion.div
+            className="bg-slate-800/70 p-4 sm:p-6 rounded-2xl backdrop-blur-lg border border-slate-700/40 shadow-[0_0_25px_rgba(16,185,129,0.2)]"
+          >
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 border-b border-slate-600/40 pb-2 text-blue-300">
+              🏆 Melhores Pontuações
+            </h2>
 
-    <Leaderboard scores={leaderboard} />
+            {bestScores.length > 0 ? (
+              <div className="space-y-3">
+                {bestScores.map((entry, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg ${
+                      entry.difficulty === config.difficulty && entry.theme === config.theme
+                        ? "bg-emerald-900/30 border border-emerald-600/40"
+                        : "bg-slate-700/50 border border-slate-600/40"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-bold text-cyan-300">{entry.name}</span>
+                      <span className="text-yellow-300 font-bold">⭐ {entry.score}</span>
+                    </div>
+                    <div className="text-xs text-slate-300">
+                      <div className="flex justify-between">
+                        <span>⏱️ {entry.time}s</span>
+                        <span>🎯 {entry.moves}</span>
+                      </div>
+                      <div className="mt-1 text-slate-400">
+                        {entry.difficulty} • {entry.theme} • {entry.date}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400 text-center py-4">Nenhuma pontuação ainda</p>
+            )}
 
-    <div className="mt-4 text-xs sm:text-sm text-slate-300">
-      <p className="mb-2 font-semibold text-white">📋 Regras:</p>
-      <ul className="list-disc list-inside space-y-1">
-        <li>+10 pontos por acerto</li>
-        <li>-2 pontos por erro</li>
-        <li>Menor tempo → Ranking mais alto</li>
-      </ul>
-    </div>
-  </motion.div>
-</div>
-
-{/* Ranking no mobile (abaixo do jogo) */}
-<div className="block lg:hidden mt-6">
-  <motion.div
-    className="bg-slate-800/70 p-4 sm:p-6 rounded-2xl backdrop-blur-lg border border-slate-700/40 shadow-[0_0_25px_rgba(16,185,129,0.2)]"
-  >
-    <h2 className="text-lg sm:text-xl font-bold mb-3 border-b border-slate-600/40 pb-2 text-blue-300">
-      🏆 Ranking
-    </h2>
-
-    <Leaderboard scores={leaderboard} />
-
-    <div className="mt-3 text-xs sm:text-sm text-slate-300">
-      <p className="mb-1 font-semibold text-white">📋 Regras:</p>
-      <ul className="list-disc list-inside space-y-1">
-        <li>+10 pontos por acerto</li>
-        <li>-2 pontos por erro</li>
-        <li>Menor tempo → Ranking mais alto</li>
-      </ul>
-    </div>
-  </motion.div>
-</div>
-
+            <div className="mt-4 text-xs sm:text-sm text-slate-300">
+              <p className="mb-2 font-semibold text-white">📋 Regras:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>+10 pontos por acerto</li>
+                <li>-2 pontos por erro</li>
+                <li>Maior pontuação → Melhor ranking</li>
+              </ul>
+            </div>
+          </motion.div>
+        </div>
       </div>
       
       {celebrate && <Confetti recycle={false} numberOfPieces={2000} onConfettiComplete={() => setCelebrate(false)} />}

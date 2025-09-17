@@ -2,8 +2,15 @@
 import { useEffect, useState } from "react";
 
 interface PathBoardProps {
-  difficulty: "easy" | "medium" | "hard" | "insane";
+  difficulty: "easy" | "medium" | "hard" | "insane" | "ultra_insane";
   onBack: () => void;
+}
+
+interface ScoreData {
+  score: number;
+  level: number;
+  difficulty: string;
+  date: string;
 }
 
 export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
@@ -17,13 +24,40 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
   const [level, setLevel] = useState<number>(1);
   const [score, setScore] = useState<number>(0);
   const [showCorrectPath, setShowCorrectPath] = useState<boolean>(false);
+  const [highScores, setHighScores] = useState<ScoreData[]>([]);
 
   // Configurações de dificuldade
   const difficultyConfig = {
     easy: { size: 3, length: 4, color: "from-green-500 to-emerald-600" },
     medium: { size: 4, length: 6, color: "from-yellow-500 to-amber-600" },
     hard: { size: 5, length: 8, color: "from-orange-500 to-red-600" },
-    insane: { size: 6, length: 12, color: "from-purple-500 to-pink-600" }
+    insane: { size: 6, length: 12, color: "from-purple-500 to-pink-600" },
+    ultra_insane: { size: 7, length: 16, color: "from-red-500 to-pink-700" }
+  };
+
+  // Carrega pontuações salvas
+  useEffect(() => {
+    const savedScores = localStorage.getItem("pathMemoryHighScores");
+    if (savedScores) {
+      setHighScores(JSON.parse(savedScores));
+    }
+  }, []);
+
+  // Salva pontuação no localStorage
+  const saveScore = (finalScore: number, finalLevel: number) => {
+    const newScore: ScoreData = {
+      score: finalScore,
+      level: finalLevel,
+      difficulty: difficulty,
+      date: new Date().toLocaleDateString('pt-BR')
+    };
+
+    const updatedScores = [...highScores, newScore]
+      .sort((a, b) => b.score - a.score || b.level - a.level)
+      .slice(0, 10); // Mantém apenas as 10 melhores pontuações
+
+    setHighScores(updatedScores);
+    localStorage.setItem("pathMemoryHighScores", JSON.stringify(updatedScores));
   };
 
   // Gera caminho único, conectado e sem repetições
@@ -71,9 +105,17 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
   }
 
   function nextLevel() {
-    setLevel(level + 1);
-    setScore(score + level * 10);
+    const newLevel = level + 1;
+    const newScore = score + newLevel * 10;
+    
+    setLevel(newLevel);
+    setScore(newScore);
     resetGame();
+  }
+
+  function handleGameOver() {
+    setMessage("💀 Game Over! Sua pontuação foi salva.");
+    saveScore(score, level);
   }
 
   function handleClick(index: number) {
@@ -86,12 +128,14 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
     const step = newPlayerPath.length - 1;
     if (path[step] !== index) {
       setMessage("❌ Você errou! O caminho correto será mostrado.");
-      setScore(Math.max(0, score - 5));
+      const newScore = Math.max(0, score - 5);
+      setScore(newScore);
       
       // Mostra o caminho correto por 3 segundos
       setShowCorrectPath(true);
       setTimeout(() => {
         setShowCorrectPath(false);
+        handleGameOver();
       }, 3000);
       
       return;
@@ -153,7 +197,7 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
           </button>
           
           <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${config.color} text-xs font-semibold`}>
-            {difficulty.toUpperCase()}
+            {difficulty.toUpperCase().replace('_', ' ')}
           </div>
         </div>
 
@@ -230,12 +274,12 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
         {/* Mensagem de status */}
         {message && (
           <div className={`p-3 rounded-lg text-center mb-4 font-medium ${
-            message.includes("❌") 
+            message.includes("❌") || message.includes("💀")
               ? "bg-red-900/50 text-red-200" 
               : "bg-green-900/50 text-green-200"
           }`}>
             {message}
-            {message.includes("❌") && !showCorrectPath && (
+            {(message.includes("❌") || message.includes("💀")) && !showCorrectPath && (
               <div className="text-xs mt-1">Clique em "Reiniciar" para tentar novamente</div>
             )}
           </div>
@@ -291,6 +335,27 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
         <div className="text-xs text-slate-400 text-center mt-2">
           Progresso: {playerPath.length}/{path.length}
         </div>
+
+        {/* Melhor Pontuação */}
+        {highScores.length > 0 && (
+          <div className="mt-6 p-3 bg-slate-700/50 rounded-lg border border-slate-600/40">
+            <h3 className="text-sm font-semibold text-center mb-2 text-yellow-300">
+              🏆 Melhor Pontuação
+            </h3>
+            <div className="text-xs text-slate-300">
+              <div className="flex justify-between">
+                <span>Pontos: {highScores[0].score}</span>
+                <span>Nível: {highScores[0].level}</span>
+              </div>
+              <div className="text-center mt-1">
+                Dificuldade: {highScores[0].difficulty.replace('_', ' ').toUpperCase()}
+              </div>
+              <div className="text-center text-slate-400 text-[10px] mt-1">
+                Em {highScores[0].date}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

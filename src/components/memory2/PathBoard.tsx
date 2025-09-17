@@ -75,7 +75,8 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
   }
 
   function handleClick(index: number) {
-    if (displaying || message) return;
+    // Impede cliques durante exibição, com mensagem ou em quadrados já selecionados
+    if (displaying || message || playerPath.includes(index)) return;
 
     const newPlayerPath = [...playerPath, index];
     setPlayerPath(newPlayerPath);
@@ -175,12 +176,13 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
               const isVisible = visibleIndices.includes(i);
               const isClicked = playerPath.includes(i);
               const isInPath = path.includes(i);
+              const isDisabled = displaying || !!message || playerPath.includes(i);
 
               return (
                 <button
                   key={i}
                   onClick={() => handleClick(i)}
-                  disabled={displaying || !!message}
+                  disabled={isDisabled}
                   className={`
                     aspect-square rounded-lg transition-all duration-300 border-2
                     ${isVisible 
@@ -191,7 +193,7 @@ export default function PathBoard({ difficulty, onBack }: PathBoardProps) {
                           : "bg-red-500 border-red-600"
                         : "bg-slate-700 border-slate-600 hover:bg-slate-600"
                     }
-                    ${displaying ? "cursor-not-allowed" : "cursor-pointer"}
+                    ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}
                   `}
                 />
               );

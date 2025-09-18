@@ -4,7 +4,7 @@ import MainMenu from "./components/MainMenu";
 import MemoryGame from "./components/memory/MemoryGame";
 import PathMemoryGame from "./components/pathMemory/PathMemoryGame";
 import SequenceRush from "./components/sequenceRush/SequenceRush";
-import ReactionRush from "./components/reactionRush/reactionRush";
+import ReactionRush from "./components/reactionRush/reactionRush"
 import MathChallenge from "./components/mathChallenge/MathChallenge";
 import SnakeGame from "./components/snake/Snake";
 
